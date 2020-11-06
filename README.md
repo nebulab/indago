@@ -1,8 +1,6 @@
 # Indago
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/indago`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Lightweight drop-in Ransack replacement without the ActiveRecord hackery.
 
 ## Installation
 
@@ -16,13 +14,43 @@ And then execute:
 
     $ bundle install
 
-Or install it yourself as:
-
-    $ gem install indago
-
 ## Usage
 
-TODO: Write usage instructions here
+In your controller:
+
+```rb
+require "indago"
+
+class PostsController < ApplicationController
+  SEARCH_FIELDS = [
+    # Reusing scopes
+    Indago::Field.new(:is_published) do |scope, value|
+      value.present? ? scope.published : scope
+    end,
+
+    # Complex joins
+    Indago::Field.new(:commented_by_id) do |scope, value|
+      scope.where(
+        id: Comment.where(author_id: value).select(:post_id).distinct
+      )
+    end,
+
+    # Common search fields
+    Indago::Field::Contain.new(:title_cont, :title),
+    Indago::Field::Contain.new(:body_cont, :body),
+
+    # Custom queries
+    Indago::Field.new(:body_starts_with) do |scope, value|
+      scope.where("body LIKE ?", "#{value}%")
+    end
+  ]
+
+  def index
+    @search = Indago::Search.new(Post.all, SEARCH_FIELDS, params[:q])
+    @posts = @search.result
+  end
+end
+```
 
 ## Development
 

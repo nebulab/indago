@@ -2,5 +2,8 @@ require "indago/version"
 
 module Indago
   class Error < StandardError; end
-  # Your code goes here...
+
+  autoload :Field, "indago/field"
+  autoload :Hackery, "indago/hackery"
+  autoload :Search, "indago/search"
 end
